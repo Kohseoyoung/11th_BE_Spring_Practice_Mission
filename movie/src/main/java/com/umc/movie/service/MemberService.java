@@ -10,6 +10,7 @@ import com.umc.movie.entity.Member;
 import com.umc.movie.exception.ApiException;
 import com.umc.movie.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -53,6 +54,8 @@ public class MemberService {
         return new MemberResponse(savedMember.getMemberId(), savedMember.getEmail(), savedMember.getNickname());
     }
 
+    // [리뷰 반영] 조회는 readOnly 트랜잭션
+    @Transactional(readOnly = true)
     public MemberInfoResponse getMyInfo(Long memberId) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "MEMBER404_1",
@@ -61,6 +64,8 @@ public class MemberService {
         return MemberInfoResponse.from(member);
     }
 
+    // [리뷰 반영] 수정은 트랜잭션으로 묶음
+    @Transactional
     public MemberInfoResponse updateMyInfo(Long memberId, MemberUpdateRequest request) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "MEMBER404_1",
@@ -74,7 +79,15 @@ public class MemberService {
         }
 
         member.updateNickname(request.nickname());
-        memberRepository.save(member);
+
+        // [리뷰 반영] 동시에 같은 닉네임으로 바꾸면 사전 검사를 둘 다 통과할 수 있습니다.
+        // 바로 flush해서 UNIQUE 제약 위반을 이 메서드 안에서 잡고, 같은 응답 코드로 바꿉니다.
+        try {
+            memberRepository.saveAndFlush(member);
+        } catch (DataIntegrityViolationException e) {
+            throw new ApiException(HttpStatus.CONFLICT, "MEMBER409_1",
+                    "이미 사용 중인 닉네임입니다.");
+        }
 
         return MemberInfoResponse.from(member);
     }

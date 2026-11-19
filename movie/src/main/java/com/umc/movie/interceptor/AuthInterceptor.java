@@ -39,7 +39,8 @@ public class AuthInterceptor implements HandlerInterceptor {
         String header = request.getHeader(HttpHeaders.AUTHORIZATION);
 
         // "Bearer {토큰}" 형식이 아니면 아예 토큰을 보내지 않은 것으로 봅니다
-        if (header == null || !header.startsWith(BEARER_PREFIX)) {
+        // [리뷰 반영] HTTP 인증 스킴은 대소문자를 구분하지 않으므로 "bearer", "BEARER"도 허용합니다
+        if (header == null || !hasBearerPrefix(header)) {
             throw new ApiException(HttpStatus.UNAUTHORIZED, "AUTH401_2",
                     "로그인이 필요한 요청입니다.");
         }
@@ -51,5 +52,13 @@ public class AuthInterceptor implements HandlerInterceptor {
         request.setAttribute(MEMBER_ID, memberId);
 
         return true;
+    }
+
+    /**
+     * 헤더가 "Bearer "로 시작하는지 대소문자 구분 없이 확인합니다.
+     * regionMatches의 첫 번째 인자 true가 대소문자를 무시하라는 뜻입니다.
+     */
+    private boolean hasBearerPrefix(String header) {
+        return header.regionMatches(true, 0, BEARER_PREFIX, 0, BEARER_PREFIX.length());
     }
 }

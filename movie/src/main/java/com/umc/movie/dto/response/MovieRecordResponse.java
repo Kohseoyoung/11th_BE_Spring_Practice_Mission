@@ -1,4 +1,7 @@
 package com.umc.movie.dto.response;
 
-public class MovieRecordResponse {
+public record MovieRecordResponse(
+        RatingResponse rating,
+        FavoriteResponse favorite
+) {
 }

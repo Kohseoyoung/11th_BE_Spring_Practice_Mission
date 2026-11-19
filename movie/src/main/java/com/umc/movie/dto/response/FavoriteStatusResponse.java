@@ -1,4 +1,6 @@
 package com.umc.movie.dto.response;
 
-public class FavoriteStatusResponse {
+public record FavoriteStatusResponse(
+        boolean isFavorite
+) {
 }
