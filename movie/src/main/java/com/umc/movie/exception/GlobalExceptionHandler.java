@@ -1,7 +1,6 @@
-package com.umc.movie.controller;
+package com.umc.movie.exception;
 
 import com.umc.movie.dto.response.ApiResponse;
-import com.umc.movie.exception.ApiException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
